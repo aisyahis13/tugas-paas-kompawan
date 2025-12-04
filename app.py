@@ -1,128 +1,232 @@
-from flask import Flask
-from datetime import datetime, timedelta
+from flask import Flask, render_template_string
 
 app = Flask(__name__)
 
+# --- DATA MOBIL (Ceritanya ini Database kita) ---
+daftar_mobil = [
+    {
+        "id": 1,
+        "nama": "Toyota Avanza",
+        "jenis": "MPV - 7 Kursi",
+        "transmisi": "Manual",
+        "harga": 350000,
+        "gambar": "https://images.unsplash.com/photo-1590362891991-f776e747a588?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+    },
+    {
+        "id": 2,
+        "nama": "Honda Brio",
+        "jenis": "City Car - 5 Kursi",
+        "transmisi": "Otomatis",
+        "harga": 300000,
+        "gambar": "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+    },
+    {
+        "id": 3,
+        "nama": "Mitsubishi Pajero",
+        "jenis": "SUV - Sport",
+        "transmisi": "Otomatis",
+        "harga": 1200000,
+        "gambar": "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+    },
+    {
+        "id": 4,
+        "nama": "Toyota Hiace",
+        "jenis": "Minibus - 15 Kursi",
+        "transmisi": "Manual",
+        "harga": 1100000,
+        "gambar": "https://images.unsplash.com/photo-1570125909232-eb263c188f7e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+    }
+]
+
 @app.route('/')
 def home():
-    # Menghitung Waktu WIB (UTC+7) secara manual agar tidak perlu install library tambahan
-    waktu_wib = datetime.utcnow() + timedelta(hours=7)
-    waktu_str = waktu_wib.strftime("%Y-%m-%d %H:%M:%S")
-
-    # HTML dengan CSS (Desain Cantik)
-    html_content = f"""
+    # CSS dan HTML digabung disini agar praktis satu file
+    html_template = """
     <!DOCTYPE html>
     <html lang="id">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Tugas PaaS - Kelompok ACEL</title>
+        <title>ACEL Rent Car - Sewa Mobil Terpercaya</title>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
         <style>
-            body {{
-                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                height: 100vh;
+            :root {
+                --primary: #2563eb;
+                --dark: #1e293b;
+                --light: #f8fafc;
+            }
+            body {
+                font-family: 'Segoe UI', sans-serif;
                 margin: 0;
+                background-color: var(--light);
+                color: var(--dark);
+            }
+            
+            /* Navbar */
+            .navbar {
+                background: white;
+                padding: 1rem 5%;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
                 display: flex;
-                justify-content: center;
+                justify-content: space-between;
                 align-items: center;
-                color: #333;
-            }}
-            .container {{
-                background-color: white;
-                padding: 40px;
-                border-radius: 20px;
-                box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+                position: sticky;
+                top: 0;
+                z-index: 100;
+            }
+            .logo {
+                font-size: 1.5rem;
+                font-weight: 800;
+                color: var(--primary);
+                text-decoration: none;
+            }
+            
+            /* Hero Section */
+            .hero {
+                background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?ixlib=rb-4.0.3');
+                background-size: cover;
+                background-position: center;
+                height: 300px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
                 text-align: center;
-                max-width: 500px;
-                width: 90%;
-                transition: transform 0.3s;
-            }}
-            .container:hover {{
-                transform: translateY(-5px);
-            }}
-            h1 {{
-                color: #764ba2;
-                margin-bottom: 5px;
-                font-size: 24px;
-                text-transform: uppercase;
-                letter-spacing: 2px;
-            }}
-            .subtitle {{
-                color: #888;
-                font-size: 14px;
-                margin-bottom: 30px;
-            }}
-            .group-box {{
-                background-color: #f0f4ff;
-                border: 2px dashed #667eea;
-                border-radius: 10px;
-                padding: 15px;
-                margin-bottom: 25px;
-            }}
-            .group-name {{
-                font-weight: bold;
-                color: #444;
-                font-size: 16px;
-                margin: 5px 0;
-            }}
-            .nim {{
-                color: #666;
-                font-size: 14px;
-            }}
-            .time-box {{
-                margin-top: 20px;
-                padding: 10px;
-                background-color: #333;
-                color: #0f0;
-                font-family: 'Courier New', Courier, monospace;
-                border-radius: 5px;
-                display: inline-block;
-                font-weight: bold;
-            }}
-            .badge {{
-                background-color: #28a745;
                 color: white;
-                padding: 5px 10px;
+                padding: 0 20px;
+            }
+            .hero h1 { font-size: 2.5rem; margin-bottom: 10px; }
+            .hero p { font-size: 1.1rem; opacity: 0.9; }
+
+            /* Card Container */
+            .container {
+                max-width: 1200px;
+                margin: 40px auto;
+                padding: 0 20px;
+            }
+            .section-title {
+                text-align: center;
+                margin-bottom: 30px;
+                color: var(--dark);
+            }
+            
+            .grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                gap: 25px;
+            }
+
+            /* Car Card */
+            .card {
+                background: white;
                 border-radius: 15px;
-                font-size: 12px;
+                overflow: hidden;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+                transition: transform 0.3s;
+            }
+            .card:hover {
+                transform: translateY(-5px);
+            }
+            .card-img {
+                width: 100%;
+                height: 200px;
+                object-fit: cover;
+            }
+            .card-content {
+                padding: 20px;
+            }
+            .car-name {
+                font-size: 1.25rem;
                 font-weight: bold;
-                vertical-align: middle;
-            }}
-            footer {{
-                margin-top: 30px;
-                font-size: 12px;
-                color: #aaa;
-            }}
+                margin: 0 0 10px 0;
+            }
+            .specs {
+                display: flex;
+                gap: 15px;
+                color: #64748b;
+                font-size: 0.9rem;
+                margin-bottom: 15px;
+            }
+            .specs i { color: var(--primary); margin-right: 5px; }
+            
+            .price-tag {
+                font-size: 1.2rem;
+                color: var(--primary);
+                font-weight: bold;
+                margin-bottom: 15px;
+                display: block;
+            }
+            .btn-sewa {
+                display: block;
+                width: 100%;
+                padding: 12px;
+                background-color: #25D366; /* Warna WA */
+                color: white;
+                text-align: center;
+                text-decoration: none;
+                border-radius: 8px;
+                font-weight: bold;
+                transition: background 0.3s;
+            }
+            .btn-sewa:hover {
+                background-color: #128C7E;
+            }
+
+            /* Footer */
+            footer {
+                background: var(--dark);
+                color: white;
+                text-align: center;
+                padding: 20px;
+                margin-top: 50px;
+            }
         </style>
     </head>
     <body>
-        <div class="container">
-            <h1>Tugas 12 - PaaS</h1>
-            <div class="subtitle">Platform as a Service Deployment</div>
-            
-            <div class="group-box">
-                <p class="group-name">KELOMPOK ACEL</p>
-                <div class="nim">Aisyah - 1203230015</div>
-                <div class="nim">Azteca Chelsy Pramestia - 1203230062</div>
-            </div>
 
-            <p>Status Aplikasi: <span class="badge">ONLINE 🟢</span></p>
-            <p>Platform: <strong>Vercel (Free Tier)</strong></p>
-            
-            <p style="margin-top: 20px;">Waktu Server (WIB):</p>
-            <div class="time-box">
-                {waktu_str}
-            </div>
+        <nav class="navbar">
+            <a href="#" class="logo">ACEL RENT CAR 🚗</a>
+            <div style="font-weight: bold; color: #555;">Kelompok Acel</div>
+        </nav>
 
-            <footer>
-                &copy; 2024 Telkom University - Komputasi Awan
-            </footer>
+        <div class="hero">
+            <div>
+                <h1>Solusi Perjalanan Nyaman</h1>
+                <p>Sewa mobil lepas kunci atau dengan supir, harga mahasiswa!</p>
+            </div>
         </div>
+
+        <div class="container">
+            <h2 class="section-title">Armada Pilihan Kami</h2>
+            
+            <div class="grid">
+                {% for mobil in mobil_list %}
+                <div class="card">
+                    <img src="{{ mobil.gambar }}" alt="{{ mobil.nama }}" class="card-img">
+                    <div class="card-content">
+                        <h3 class="car-name">{{ mobil.nama }}</h3>
+                        <div class="specs">
+                            <span><i class="fas fa-car"></i> {{ mobil.jenis }}</span>
+                            <span><i class="fas fa-cog"></i> {{ mobil.transmisi }}</span>
+                        </div>
+                        <span class="price-tag">Rp {{ '{:,}'.format(mobil.harga).replace(',', '.') }} / hari</span>
+                        
+                        <a href="https://wa.me/6281234567890?text=Halo%20Admin%20Acel%20Rent,%20saya%20mau%20booking%20mobil%20{{ mobil.nama }}" target="_blank" class="btn-sewa">
+                            <i class="fab fa-whatsapp"></i> Booking via WA
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 Tugas PaaS - Kelompok ACEL. Deployed on Vercel.</p>
+        </footer>
+
     </body>
     </html>
     """
-    return html_content
+    return render_template_string(html_template, mobil_list=daftar_mobil)
 
 if __name__ == '__main__':
     app.run()
